@@ -2,8 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 import { BookOpen, Bookmark, Share2, Star, ChevronRight, ChevronDown, Clock, ArrowLeft } from "lucide-react";
 import { getManga } from "@/lib/manga";
-import fs from "node:fs";
-import path from "node:path";
+import { scrapedManga } from "@/lib/scraped-data";
 import hero from "@/assets/hero.jpg";
 
 export const Route = createFileRoute("/manga/$slug")({
@@ -11,15 +10,9 @@ export const Route = createFileRoute("/manga/$slug")({
     // 1. local fallback manga
     let manga = getManga(params.slug);
     if (manga) return { manga };
-    // 2. read from scraped komiktap.json
-    try {
-      const p = path.join(process.cwd(), "public", "data", "komiktap.json");
-      if (fs.existsSync(p)) {
-        const json = JSON.parse(fs.readFileSync(p, "utf8"));
-        const found = json.data?.find((m: any) => m.slug === params.slug);
-        if (found) return { manga: found };
-      }
-    } catch {}
+    // 2. read from scraped data
+    const found = scrapedManga.find((m: any) => m.slug === params.slug);
+    if (found) return { manga: found };
     throw notFound();
   },
   head: async ({ loaderData }) => {
@@ -43,7 +36,7 @@ export const Route = createFileRoute("/manga/$slug")({
 });
 
 function Detail() {
-  const { manga: m } = Route.useLoaderData();
+  const m = Route.useLoaderData().manga as any;
   const [more, setMore] = useState(false);
   const [saved, setSaved] = useState(false);
   const chapters = m.chapterList?.length ? m.chapterList : Array.from({ length: 8 }, (_, i) => m.chapters - i);
@@ -59,7 +52,7 @@ function Detail() {
       </header>
 
       <section className="relative overflow-hidden">
-        <img src={m.banner ?? hero} alt="" width={1920} height={832} className="absolute inset-0 h-full w-full object-cover object-right opacity-40" />
+        <img src={m.cover ?? hero} alt="" width={1920} height={832} className="absolute inset-0 h-full w-full object-cover object-right opacity-40" />
         <div className="absolute inset-0 bg-hero-fade" />
         <div className="relative mx-auto flex max-w-7xl flex-col gap-8 px-4 py-8 md:flex-row md:px-8 md:py-12">
           <img src={m.cover} alt={`${m.title} cover`} width={704} height={960} className="aspect-[3/4] w-40 rounded-xl object-cover shadow-2xl md:w-64" />

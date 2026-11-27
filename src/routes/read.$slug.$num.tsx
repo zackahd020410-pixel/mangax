@@ -2,29 +2,20 @@ import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-ro
 import { useState, useEffect } from "react";
 import { ArrowLeft, ChevronLeft, ChevronRight, Settings, Sun, X, Bookmark, Clock } from "lucide-react";
 import { getManga } from "@/lib/manga";
-import fs from "node:fs";
-import path from "node:path";
+import { scrapedManga } from "@/lib/scraped-data";
 import { history } from "@/lib/storage";
 
 const BGS = ["bg-background", "bg-card", "bg-secondary", "bg-muted"];
 
-function loadKomiktap() {
-  try {
-    const p = path.join(process.cwd(), "public", "data", "komiktap.json");
-    if (fs.existsSync(p)) {
-      const json = JSON.parse(fs.readFileSync(p, "utf8"));
-      return json.data ?? [];
-    }
-  } catch {}
-  return [];
+function loadManga(slug: string) {
+  return scrapedManga.find((m: any) => m.slug === slug) ?? getManga(slug);
 }
 
 export const Route = createFileRoute("/read/$slug/$num")({
   loader: async ({ params }) => {
     const slug = params.slug;
     const num = Number(params.num);
-    const scraped = loadKomiktap().find((m: any) => m.slug === slug);
-    const manga = scraped ?? getManga(slug);
+    const manga = loadManga(slug);
     if (!manga || !Number.isInteger(num) || num < 1 || num > manga.chapters) throw notFound();
     const chapter = manga.chapterList?.find((c: any) => c.num === num);
     if (!chapter) throw notFound();
@@ -39,7 +30,7 @@ export const Route = createFileRoute("/read/$slug/$num")({
 });
 
 function Reader() {
-  const { manga: m, num, chapter } = Route.useLoaderData();
+  const { manga: m, num, chapter } = Route.useLoaderData() as any;
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"v" | "h">("v");
