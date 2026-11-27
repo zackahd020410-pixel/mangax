@@ -114,7 +114,11 @@ const LIMIT = Number(process.env.SCRAPE_LIMIT || 10);
   fs.mkdirSync(dir, { recursive: true });
   const file = path.join(dir, "komiktap.json");
   fs.writeFileSync(file, JSON.stringify({ ok: true, count: out.length, data: out }, null, 2));
-  console.log(`Saved ${out.length} manga -> ${file}`);
+  // Also write to src/data so serverless functions can bundle it
+  const dir2 = path.join(process.cwd(), "src", "data");
+  fs.mkdirSync(dir2, { recursive: true });
+  fs.writeFileSync(path.join(dir2, "komiktap.json"), JSON.stringify({ ok: true, count: out.length, data: out }, null, 2));
+  console.log(`Saved ${out.length} manga -> ${file} + src/data/komiktap.json`);
 })().catch((e) => {
   console.error("ERROR:", e.message);
   process.exit(1);
