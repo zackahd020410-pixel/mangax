@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BookOpen, TrendingUp, ArrowRight, Home, Compass, Bookmark, Clock, User } from "lucide-react";
+import { BookOpen, TrendingUp, ArrowRight, Home, Compass, Bookmark, Clock, User, ChevronLeft, ChevronRight } from "lucide-react";
 import { scrapedManga } from "@/lib/scraped-data";
 
 export const Route = createFileRoute("/")({
@@ -18,6 +18,7 @@ export const Route = createFileRoute("/")({
 });
 
 const CATEGORIES = ["All", "Manhwa", "Manga", "Manhua"];
+const PER_PAGE = 10;
 
 function cleanTitle(t: string) {
   const qCount = (t.match(/"/g) || []).length;
@@ -27,6 +28,7 @@ function cleanTitle(t: string) {
 
 function Index() {
   const [category, setCategory] = useState("All");
+  const [page, setPage] = useState(1);
   const [slide, setSlide] = useState(0);
 
   const data = scrapedManga.length > 0 ? scrapedManga : [];
@@ -36,12 +38,19 @@ function Index() {
     return matchCat;
   });
 
+  const totalPages = Math.ceil(filtered.length / PER_PAGE);
+  const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
   const popular = data.slice(0, 8);
 
   useEffect(() => {
     const id = setInterval(() => setSlide((s) => (s + 1) % popular.length), 4000);
     return () => clearInterval(id);
   }, [popular.length]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [category]);
 
   return (
     <div className="min-h-screen pb-20 md:pb-0">
@@ -100,7 +109,7 @@ function Index() {
           </div>
         </section>
 
-        {/* Categories - below popular */}
+        {/* Categories */}
         <section>
           <div className="flex flex-wrap gap-2">
             {CATEGORIES.map((c) => (
@@ -110,32 +119,48 @@ function Index() {
           </div>
         </section>
 
-        {/* Manga grid */}
+        {/* Manga grid - paginated 10 per page */}
         <section>
           <SectionHead title="All Manga" />
           {filtered.length === 0 ? (
             <p className="text-muted-foreground">No manga match your filter.</p>
           ) : (
-            <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-              {filtered.map((m: any) => (
-                <Link key={m.id} to="/manga/$slug" params={{ slug: m.slug }} className="group flex flex-col gap-2">
-                  <div className="overflow-hidden rounded-lg aspect-[3/4] relative">
-                    <img src={m.cover} alt={`${m.title} cover`} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
-                      <span className="text-[11px] text-white">{m.status}</span>
+            <>
+              <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                {paginated.map((m: any) => (
+                  <Link key={m.id} to="/manga/$slug" params={{ slug: m.slug }} className="group flex flex-col gap-2">
+                    <div className="overflow-hidden rounded-lg aspect-[3/4] relative">
+                      <img src={m.cover} alt={`${m.title} cover`} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+                        <span className="text-[11px] text-white">{m.status}</span>
+                      </div>
                     </div>
-                  </div>
-                  <h3 className="text-sm font-semibold line-clamp-1">{cleanTitle(m.title)}</h3>
-                  <p className="text-xs text-muted-foreground line-clamp-2">{m.synopsis?.slice(0, 80)}...</p>
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span>⭐ {m.rating || "-"}</span>
-                    <span>·</span>
-                    <span>Ch. 1-{m.chapters}</span>
-                    {m.updated && <><span>·</span><span>{m.updated}</span></>}
-                  </div>
-                </Link>
-              ))}
-            </div>
+                    <h3 className="text-sm font-semibold line-clamp-1">{cleanTitle(m.title)}</h3>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{m.synopsis?.slice(0, 80)}...</p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>⭐ {m.rating || "-"}</span>
+                      <span>·</span>
+                      <span>Ch. 1-{m.chapters}</span>
+                      {m.updated && <><span>·</span><span>{m.updated}</span></>}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-8 flex items-center justify-center gap-4">
+                  <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}
+                    className="inline-flex items-center gap-1 rounded-full bg-secondary px-4 py-2 text-sm disabled:opacity-40">
+                    <ChevronLeft className="h-4 w-4" /> Prev
+                  </button>
+                  <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
+                  <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}
+                    className="inline-flex items-center gap-1 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-40">
+                    Next <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </section>
 
