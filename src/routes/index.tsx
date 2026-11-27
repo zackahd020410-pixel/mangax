@@ -2,9 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BookOpen, TrendingUp, ArrowRight, Home, Compass, Bookmark, Clock, User } from "lucide-react";
 import { scrapedManga } from "@/lib/scraped-data";
-import { history } from "@/lib/storage";
 import hero from "@/assets/hero.jpg";
-import promo from "@/assets/promo.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -21,19 +19,23 @@ export const Route = createFileRoute("/")({
 });
 
 const CATEGORIES = ["All", "Manhwa", "Manga", "Manhua"];
-const GENRES = ["Action", "Adventure", "Comedy", "Drama", "Fantasy", "Romance", "Horror", "Sports"];
+
+function cleanTitle(t: string) {
+  // if more than one quote, don't display (return empty)
+  const qCount = (t.match(/"/g) || []).length;
+  if (qCount > 1) return "";
+  return t;
+}
 
 function Index() {
   const [category, setCategory] = useState("All");
-  const [genre, setGenre] = useState<string | null>(null);
   const [slide, setSlide] = useState(0);
 
   const data = scrapedManga.length > 0 ? scrapedManga : [];
 
   const filtered = data.filter((m: any) => {
     const matchCat = category === "All" || (m.genres ?? []).some((g: string) => g.toLowerCase().includes(category.toLowerCase()));
-    const matchGenre = !genre || (m.genres ?? []).includes(genre);
-    return matchCat && matchGenre;
+    return matchCat;
   });
 
   const popular = data.slice(0, 8);
@@ -83,19 +85,7 @@ function Index() {
           </div>
         </section>
 
-        {/* Genre filter */}
-        <section>
-          <div className="flex flex-wrap gap-2">
-            <button onClick={() => setGenre(null)}
-              className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${genre === null ? "bg-primary text-primary-foreground" : "glass hover:bg-accent"}`}>All Genres</button>
-            {GENRES.map((g) => (
-              <button key={g} onClick={() => setGenre(genre === g ? null : g)}
-                className={`rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${genre === g ? "bg-primary text-primary-foreground" : "glass hover:bg-accent"}`}>{g}</button>
-            ))}
-          </div>
-        </section>
-
-        {/* Popular this week - auto slide */}
+        {/* Popular this week - auto slide, no box, full image */}
         <section>
           <div className="mb-5 flex items-center justify-between">
             <h2 className="flex items-center gap-3 text-2xl font-bold"><TrendingUp className="h-6 w-6" />Popular This Week</h2>
@@ -103,24 +93,22 @@ function Index() {
           <div className="relative overflow-hidden rounded-2xl">
             <div className="flex transition-transform duration-700 ease-in-out" style={{ transform: `translateX(-${slide * 100}%)` }}>
               {popular.map((m: any) => (
-                <div key={m.id} className="min-w-full">
-                  <Link to="/manga/$slug" params={{ slug: m.slug }} className="grid gap-6 md:grid-cols-[2fr_1fr]">
-                    <div className="relative overflow-hidden rounded-2xl">
-                      <img src={m.cover} alt={m.title} className="h-64 w-full object-cover md:h-80" />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                      <div className="absolute bottom-4 left-4">
-                        <h3 className="text-2xl font-bold text-white">{m.title}</h3>
-                        <p className="text-sm text-white/80">{(m.genres ?? []).join(" · ")}</p>
-                        <p className="mt-1 text-sm text-white/60">{m.synopsis?.slice(0, 120)}...</p>
-                      </div>
+                <div key={m.id} className="min-w-full relative">
+                  <img src={m.cover} alt={m.title} className="h-72 w-full object-cover md:h-96" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+                  <div className="absolute bottom-6 left-6 right-6">
+                    <h3 className="text-3xl font-bold text-white">{cleanTitle(m.title)}</h3>
+                    <p className="mt-1 text-sm text-white/80">{(m.genres ?? []).join(" · ")}</p>
+                    <p className="mt-2 text-sm text-white/70 line-clamp-2">{m.synopsis?.slice(0, 150)}</p>
+                    <div className="mt-3 flex items-center gap-4 text-sm text-white/80">
+                      <span>⭐ {m.rating || "-"}</span>
+                      <span>{m.chapters} ch</span>
+                      <span>{m.status}</span>
                     </div>
-                    <div className="flex flex-col justify-center gap-3">
-                      <p className="text-sm text-muted-foreground">Rating: {m.rating || "-"}</p>
-                      <p className="text-sm text-muted-foreground">Status: {m.status || "-"}</p>
-                      <p className="text-sm text-muted-foreground">Chapters: {m.chapters}</p>
-                      <button className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground w-fit"><BookOpen className="h-4 w-4" /> Read Now</button>
-                    </div>
-                  </Link>
+                    <Link to="/manga/$slug" params={{ slug: m.slug }} className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground">
+                      <BookOpen className="h-4 w-4" /> Read Now
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>
@@ -132,7 +120,7 @@ function Index() {
           </div>
         </section>
 
-        {/* Manga grid with synopsis/rate/update/cover/status */}
+        {/* Manga grid */}
         <section>
           <SectionHead title="All Manga" />
           {filtered.length === 0 ? (
@@ -147,7 +135,7 @@ function Index() {
                       <span className="text-[11px] text-white">{m.status}</span>
                     </div>
                   </div>
-                  <h3 className="text-sm font-semibold line-clamp-1">{m.title}</h3>
+                  <h3 className="text-sm font-semibold line-clamp-1">{cleanTitle(m.title)}</h3>
                   <p className="text-xs text-muted-foreground line-clamp-2">{m.synopsis?.slice(0, 80)}...</p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>⭐ {m.rating || "-"}</span>
