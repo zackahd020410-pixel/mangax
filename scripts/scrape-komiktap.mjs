@@ -40,6 +40,27 @@ async function scrapeList() {
   return items;
 }
 
+async function scrapeChapterPages(url) {
+  const browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage();
+  await page.setExtraHTTPHeaders({
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+  });
+  try {
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
+    await page.waitForTimeout(2000);
+    const pages = await page.evaluate(() => {
+      const imgs = Array.from(document.querySelectorAll("img"));
+      return imgs
+        .map(img => img.getAttribute("src") || img.getAttribute("data-src") || "")
+        .filter(src => src && src.includes("cdn.uqni.net") && !src.includes("logo"));
+    });
+    return pages;
+  } finally {
+    await browser.close();
+  }
+}
+
 async function scrapeDetail(slug) {
   const browser = await chromium.launch({ headless: true });
   const page = await browser.newPage();
@@ -64,12 +85,18 @@ async function scrapeDetail(slug) {
         if (n) genres.push(n);
       });
       const chapters = [];
+      const seenChapters = new Set();
       document.querySelectorAll("a[href*='-chapter-']").forEach((a) => {
         const href = a.getAttribute("href") || "";
+        // skip "Latest" links from sidebar
+        if (a.closest(".sidebar, .widget, .latest-update")) return;
         const title = (a.textContent || "").trim();
         const m = href.match(/-chapter-(\d+)/) || (title && title.match(/chapter\s*(\d+)/i));
         const num = m ? Number(m[1]) : 0;
-        if (num && title) chapters.push({ num, title, url: href });
+        if (num && !seenChapters.has(num)) {
+          seenChapters.add(num);
+          chapters.push({ num, title: `Chapter ${num}`, url: href });
+        }
       });
       chapters.sort((a, b) => b.num - a.num);
       return { title: t, cover, synopsis, genres, chapters };
@@ -91,6 +118,16 @@ const LIMIT = Number(process.env.SCRAPE_LIMIT || 10);
     try {
       const d = await scrapeDetail(item.slug);
       const title = cleanTitle(d.title || item.text);
+      const chaptersWithPages = [];
+      for (const c of d.chapters.slice(0, 3)) {
+        try {
+          const pages = await scrapeChapterPages(c.url);
+          chaptersWithPages.push({ num: c.num, title: c.title, url: c.url, pages });
+          console.log(`    ch ${c.num}: ${pages.length} pages`);
+        } catch (e) {
+          chaptersWithPages.push({ num: c.num, title: c.title, url: c.url, pages: [] });
+        }
+      }
       out.push({
         id: `komiktap-${item.slug}`,
         source: "komiktap",
@@ -103,7 +140,7 @@ const LIMIT = Number(process.env.SCRAPE_LIMIT || 10);
         chapters: d.chapters.length || 0,
         status: "Ongoing",
         updated: "",
-        chapterList: d.chapters.map((c) => ({ num: c.num, title: c.title, url: c.url })),
+        chapterList: chaptersWithPages,
       });
       console.log(`  ok: ${title}`);
     } catch (e) {

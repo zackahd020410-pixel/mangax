@@ -1,7 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Clock, BookOpen, Trash2, Compass } from "lucide-react";
-import { history, getManga } from "@/lib/storage";
+import { history } from "@/lib/storage";
+import { scrapedManga } from "@/lib/scraped-data";
+import { getManga } from "@/lib/manga";
+
+function findManga(slug: string) {
+  return scrapedManga.find((m: any) => m.slug === slug) || getManga(slug);
+}
 
 export const Route = createFileRoute("/history")({
   head: () => ({
@@ -65,9 +71,9 @@ function HistoryPage() {
         ) : (
           <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
             {list.map((h) => {
-              const m = getManga(h.slug);
+              const m = findManga(h.slug);
               if (!m) return null;
-              const ch = m.chapterList.find((c) => c.num === h.num);
+              const ch = m.chapterList.find((c: any) => c.num === h.num);
               return (
                 <Link key={`${h.slug}-${h.num}`} to="/manga/$slug" params={{ slug: m.slug }} className="group flex flex-col gap-2">
                   <div className="overflow-hidden rounded-lg aspect-[3/4] relative">

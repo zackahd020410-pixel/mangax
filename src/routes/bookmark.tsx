@@ -1,7 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Bookmark, BookOpen, Trash2, Compass } from "lucide-react";
-import { bookmarks, getManga } from "@/lib/storage";
+import { bookmarks } from "@/lib/storage";
+import { scrapedManga } from "@/lib/scraped-data";
+import { getManga } from "@/lib/manga";
+
+function findManga(slug: string) {
+  return scrapedManga.find((m: any) => m.slug === slug) || getManga(slug);
+}
 
 export const Route = createFileRoute("/bookmark")({
   head: () => ({
@@ -51,7 +57,7 @@ function BookmarkPage() {
         ) : (
           <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
             {list.map((b) => {
-              const m = getManga(b.slug);
+              const m = findManga(b.slug);
               if (!m) return null;
               const saved = bookmarks.get().some((x) => x.slug === m.slug);
               return (

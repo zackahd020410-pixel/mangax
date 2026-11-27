@@ -96,6 +96,19 @@ function Reader() {
         )}
       </main>
 
+      {/* Related manga */}
+      <section className="mx-auto max-w-7xl px-4 py-10 md:px-8">
+        <h2 className="mb-4 text-xl font-bold">Manga Lainnya</h2>
+        <div className="grid grid-cols-3 gap-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+          {scrapedManga.filter((x: any) => x.slug !== m.slug).slice(0, 8).map((r: any) => (
+            <Link key={r.id} to="/manga/$slug" params={{ slug: r.slug }} className="group">
+              <img src={r.cover} alt={r.title} loading="lazy" className="aspect-[3/4] w-full rounded-lg object-cover transition-transform group-hover:scale-105" />
+              <p className="mt-1 text-xs font-medium line-clamp-1">{r.title}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
       <footer className="sticky bottom-0 flex items-center justify-center gap-3 border-t border-border bg-background/90 p-3 backdrop-blur">
         <Clock className="h-4 w-4 text-muted-foreground" />
         {prevChapter ? (
