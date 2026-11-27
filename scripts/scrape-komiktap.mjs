@@ -49,11 +49,18 @@ async function scrapeChapterPages(url) {
   try {
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 45000 });
     await page.waitForTimeout(2000);
-    const pages = await page.evaluate(() => {
+const pages = await page.evaluate(() => {
       const imgs = Array.from(document.querySelectorAll("img"));
       return imgs
         .map(img => img.getAttribute("src") || img.getAttribute("data-src") || "")
-        .filter(src => src && src.includes("cdn.uqni.net") && !src.includes("logo"));
+        .filter(src => {
+          if (!src) return false;
+          // Exclude known non-content images
+          const lower = src.toLowerCase();
+          if (lower.includes("logo") || lower.includes("banner") || lower.includes(".gif") || lower.includes("gravatar") || lower.includes("cdnfgo") || lower.includes("cdnasu") || lower.includes("pixel.onaudience") || lower.includes("komiktap-light") || lower.includes("sizes=auto")) return false;
+          // Keep images with valid extensions
+          return /\.(jpg|jpeg|png|webp|avif)(?:[?#].*)?$/i.test(src);
+        });
     });
     return pages;
   } finally {
