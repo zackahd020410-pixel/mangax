@@ -102,8 +102,9 @@ function Index() {
                     <p className="mt-2 text-sm text-white/70 line-clamp-2">{m.synopsis?.slice(0, 150)}</p>
                     <div className="mt-3 flex items-center gap-4 text-sm text-white/80">
                       <span>⭐ {m.rating || "-"}</span>
-                      <span>{m.chapters} ch</span>
+                      <span>Ch. 1-{m.chapters}</span>
                       <span>{m.status}</span>
+                      {m.updated && <span>{m.updated}</span>}
                     </div>
                     <Link to="/manga/$slug" params={{ slug: m.slug }} className="mt-4 inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground">
                       <BookOpen className="h-4 w-4" /> Read Now
@@ -140,7 +141,8 @@ function Index() {
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>⭐ {m.rating || "-"}</span>
                     <span>·</span>
-                    <span>{m.chapters} ch</span>
+                    <span>Ch. 1-{m.chapters}</span>
+                    {m.updated && <><span>·</span><span>{m.updated}</span></>}
                   </div>
                 </Link>
               ))}

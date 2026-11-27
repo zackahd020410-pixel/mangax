@@ -102,6 +102,9 @@ function Detail() {
                 </Link>
               ))}
             </div>
+            <div className="mt-3 text-sm text-muted-foreground">
+              <p>Last Update: {m.updated ?? "-"}</p>
+            </div>
           </section>
         </div>
       </main>
