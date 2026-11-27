@@ -85,7 +85,13 @@ function Reader() {
       )}
 
       <main className={`mx-auto ${fit} py-4`} style={{ filter: `brightness(${bright}%)` }}>
-        {mode === "v" ? (
+        {pageList.length === 0 ? (
+          <div className="flex min-h-[50vh] flex-col items-center justify-center gap-2 text-center">
+            <p className="font-display text-6xl font-bold text-muted-foreground">204</p>
+            <p className="text-lg font-medium text-muted-foreground">No Content</p>
+            <p className="max-w-md text-sm text-muted-foreground">Chapter ini belum punya halaman yang tersedia.</p>
+          </div>
+        ) : mode === "v" ? (
           pageList.map((p: string, i: number) => <img key={i} src={p} alt={`Page ${i + 1}`} loading={i ? "lazy" : "eager"} className="w-full" />)
         ) : (
           <div className="relative">
