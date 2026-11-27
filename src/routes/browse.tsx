@@ -1,8 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { BookOpen, Search, Filter, SlidersHorizontal } from "lucide-react";
-import type { MangaSource } from "@/lib/scraper/types";
 import { mangas } from "@/lib/manga";
+import { scrapedManga } from "@/lib/scraped-data";
 
 export const Route = createFileRoute("/browse")({
   head: () => ({
@@ -15,53 +15,22 @@ export const Route = createFileRoute("/browse")({
 });
 
 function Browse() {
-  const [list, setList] = useState<MangaSource[]>([]);
+  const [list, setList] = useState<any[]>(scrapedManga.length > 0 ? scrapedManga : mangas.map((m) => ({
+    id: `local-${m.slug}`,
+    source: "local",
+    slug: m.slug,
+    title: m.title,
+    cover: m.cover,
+    synopsis: m.synopsis,
+    genres: m.genres,
+    rating: m.rating,
+    chapters: m.chapters,
+    status: m.status,
+  })));
   const [q, setQ] = useState("");
   const [genre, setGenre] = useState<string | null>(null);
   const [sort, setSort] = useState<"rating" | "az">("rating");
   const [status, setStatus] = useState<"all" | "ongoing" | "completed">("all");
-
-  useEffect(() => {
-    fetch("/api/manga")
-      .then((r) => r.json())
-      .then((json: { data: MangaSource[] }) => {
-        const data = json.data ?? [];
-        if (data.length === 0) {
-          setList(
-            mangas.map((m) => ({
-              id: `local-${m.slug}`,
-              source: "local",
-              slug: m.slug,
-              title: m.title,
-              cover: m.cover,
-              synopsis: m.synopsis,
-              genres: m.genres,
-              rating: m.rating,
-              chapters: m.chapters,
-              status: m.status,
-            })),
-          );
-        } else {
-          setList(data);
-        }
-      })
-      .catch(() => {
-        setList(
-          mangas.map((m) => ({
-            id: `local-${m.slug}`,
-            source: "local",
-            slug: m.slug,
-            title: m.title,
-            cover: m.cover,
-            synopsis: m.synopsis,
-            genres: m.genres,
-            rating: m.rating,
-            chapters: m.chapters,
-            status: m.status,
-          })),
-        );
-      });
-  }, []);
 
   const filtered = list.filter((m) => {
     const matchQ = m.title.toLowerCase().includes(q.toLowerCase());
