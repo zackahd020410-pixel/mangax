@@ -122,7 +122,7 @@ function Browse() {
             <p className="text-sm text-muted-foreground">Try adjusting your search or filters.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
             {filtered.map((m) => (
               <Link key={m.id} to="/manga/$slug" params={{ slug: m.slug }} className="group">
                 <div className="overflow-hidden rounded-lg aspect-[3/4] relative">

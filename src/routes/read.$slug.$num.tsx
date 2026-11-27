@@ -35,7 +35,7 @@ function Reader() {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"v" | "h">("v");
   const [bright, setBright] = useState(100);
-  const [fit, setFit] = useState("max-w-3xl");
+  const [fit, setFit] = useState("max-w-xl");
   const [bg, setBg] = useState(0);
   const [page, setPage] = useState(0);
   const [pages, setPages] = useState<string[]>(chapter?.pages ?? []);

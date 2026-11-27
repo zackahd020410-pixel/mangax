@@ -126,7 +126,7 @@ function Index() {
             <p className="text-muted-foreground">No manga match your filter.</p>
           ) : (
             <>
-              <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 {paginated.map((m: any) => (
                   <Link key={m.id} to="/manga/$slug" params={{ slug: m.slug }} className="group flex flex-col gap-2">
                     <div className="overflow-hidden rounded-lg aspect-[3/4] relative">
