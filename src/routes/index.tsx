@@ -2,7 +2,6 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BookOpen, TrendingUp, ArrowRight, Home, Compass, Bookmark, Clock, User } from "lucide-react";
 import { scrapedManga } from "@/lib/scraped-data";
-import hero from "@/assets/hero.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -21,7 +20,6 @@ export const Route = createFileRoute("/")({
 const CATEGORIES = ["All", "Manhwa", "Manga", "Manhua"];
 
 function cleanTitle(t: string) {
-  // if more than one quote, don't display (return empty)
   const qCount = (t.match(/"/g) || []).length;
   if (qCount > 1) return "";
   return t;
@@ -65,27 +63,8 @@ function Index() {
         </div>
       </header>
 
-      <section className="relative overflow-hidden">
-        <img src={hero} alt="Anime boy overlooking a town at dusk" width={1920} height={832} className="absolute inset-0 h-full w-full object-cover object-right" />
-        <div className="absolute inset-0 bg-hero-fade" />
-        <div className="relative mx-auto max-w-7xl px-4 pb-16 pt-20 md:px-8 md:pt-28">
-          <h1 className="text-6xl font-extrabold tracking-tight md:text-8xl">MangaX</h1>
-          <p className="mt-2 text-xl font-medium md:text-2xl">Your One Stop Manga Platform</p>
-        </div>
-      </section>
-
       <main className="mx-auto max-w-7xl space-y-14 px-4 py-10 md:px-8">
-        {/* Categories */}
-        <section>
-          <div className="flex flex-wrap gap-2">
-            {CATEGORIES.map((c) => (
-              <button key={c} onClick={() => setCategory(c)}
-                className={`rounded-full px-5 py-2 text-sm font-medium transition-colors ${category === c ? "bg-primary text-primary-foreground" : "glass hover:bg-accent"}`}>{c}</button>
-            ))}
-          </div>
-        </section>
-
-        {/* Popular this week - auto slide, no box, full image */}
+        {/* Popular this week - top, no box, transparent overlay */}
         <section>
           <div className="mb-5 flex items-center justify-between">
             <h2 className="flex items-center gap-3 text-2xl font-bold"><TrendingUp className="h-6 w-6" />Popular This Week</h2>
@@ -118,6 +97,16 @@ function Index() {
                 <button key={i} onClick={() => setSlide(i)} className={`h-2 w-2 rounded-full transition-colors ${i === slide ? "bg-primary" : "bg-white/40"}`} />
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* Categories - below popular */}
+        <section>
+          <div className="flex flex-wrap gap-2">
+            {CATEGORIES.map((c) => (
+              <button key={c} onClick={() => setCategory(c)}
+                className={`rounded-full px-5 py-2 text-sm font-medium transition-colors ${category === c ? "bg-primary text-primary-foreground" : "glass hover:bg-accent"}`}>{c}</button>
+            ))}
           </div>
         </section>
 
