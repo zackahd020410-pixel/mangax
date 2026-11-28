@@ -33,13 +33,20 @@ function Index() {
   const [mangaList, setMangaList] = useState<JikanManga[]>([]);
   const [animeList, setAnimeList] = useState<JikanAnime[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
     Promise.all([
-      fetch("/api/manga?limit=25", { signal: controller.signal }).then((r) => r.json()).catch(() => []),
-      fetch("/api/anime?limit=25", { signal: controller.signal }).then((r) => r.json()).catch(() => []),
+      fetch("/api/manga?limit=25", { signal: controller.signal }).then(async (r) => {
+        if (!r.ok) throw new Error("Jikan API unavailable");
+        return r.json();
+      }).catch(() => []),
+      fetch("/api/anime?limit=25", { signal: controller.signal }).then(async (r) => {
+        if (!r.ok) throw new Error("Jikan API unavailable");
+        return r.json();
+      }).catch(() => []),
     ]).then(([m, a]) => {
       setMangaList(m || []);
       setAnimeList(a || []);

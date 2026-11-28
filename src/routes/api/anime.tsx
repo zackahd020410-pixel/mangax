@@ -9,18 +9,19 @@ export const Route = createFileRoute("/api/anime")({
         const id = url.searchParams.get("id");
         if (id) {
           const anime = await getAnimeById(Number(id));
-          return Response.json(anime ?? {});
+          if (!anime) return Response.json({ error: "Not found" }, { status: 404 });
+          return Response.json(anime);
         }
         try {
           const limit = Number(url.searchParams.get("limit") || 25);
           const offset = Number(url.searchParams.get("offset") || 0);
           const list = await getAnimeList(limit, offset);
-          if (list && list.length > 0) {
-            return Response.json(list);
+          if (!list || list.length === 0) {
+            return Response.json({ error: "No data from Jikan" }, { status: 503 });
           }
-          throw new Error("Empty Jikan response");
-        } catch {
-          return Response.json([]);
+          return Response.json(list);
+        } catch (err: any) {
+          return Response.json({ error: err.message || "Jikan API failed" }, { status: 503 });
         }
       },
     },

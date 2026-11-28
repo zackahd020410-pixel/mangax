@@ -9,12 +9,20 @@ export const Route = createFileRoute("/api/manga")({
         const id = url.searchParams.get("id");
         if (id) {
           const manga = await getMangaById(Number(id));
-          return Response.json(manga ?? {});
+          if (!manga) return Response.json({ error: "Not found" }, { status: 404 });
+          return Response.json(manga);
         }
-        const limit = Number(url.searchParams.get("limit") || 25);
-        const offset = Number(url.searchParams.get("offset") || 0);
-        const list = await getMangaList(limit, offset);
-        return Response.json(list);
+        try {
+          const limit = Number(url.searchParams.get("limit") || 25);
+          const offset = Number(url.searchParams.get("offset") || 0);
+          const list = await getMangaList(limit, offset);
+          if (!list || list.length === 0) {
+            return Response.json({ error: "No data from Jikan" }, { status: 503 });
+          }
+          return Response.json(list);
+        } catch (err: any) {
+          return Response.json({ error: err.message || "Jikan API failed" }, { status: 503 });
+        }
       },
     },
   },

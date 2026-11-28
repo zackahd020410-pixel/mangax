@@ -75,7 +75,13 @@ function Browse() {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
     fetch(`/api/${type}?limit=25`, { signal: controller.signal })
-      .then((r) => r.json())
+      .then(async (r) => {
+        if (!r.ok) {
+          const err = await r.json().catch(() => ({}));
+          throw new Error(err.error || `Failed to load ${type} (HTTP ${r.status})`);
+        }
+        return r.json();
+      })
       .then((data) => {
         const list = type === "manga"
           ? (data as JikanManga[]).map(normalizeManga)
