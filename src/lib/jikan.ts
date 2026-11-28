@@ -43,7 +43,7 @@ export type JikanAnime = {
   aired?: { from?: string; to?: string };
 };
 
-function fetchWithTimeout(url: string, ms = 8000): Promise<Response> {
+function fetchWithTimeout(url: string, ms = 3000): Promise<Response> {
   return Promise.race([
     fetch(url),
     new Promise<never>((_, reject) =>
@@ -53,7 +53,7 @@ function fetchWithTimeout(url: string, ms = 8000): Promise<Response> {
 }
 
 export async function getMangaList(limit = 25, offset = 0): Promise<JikanManga[]> {
-  const res = await fetchWithTimeout(`${BASE}/manga?limit=${limit}&offset=${offset}`);
+  const res = await fetchWithTimeout(`${BASE}/manga?limit=${limit}&offset=${offset}`, 3000);
   if (!res.ok) throw new Error("Failed to fetch manga list");
   const json = await res.json();
   return json.data ?? [];
@@ -61,7 +61,7 @@ export async function getMangaList(limit = 25, offset = 0): Promise<JikanManga[]
 
 export async function getMangaById(id: number): Promise<JikanManga | null> {
   try {
-    const res = await fetchWithTimeout(`${BASE}/manga/${id}`);
+    const res = await fetchWithTimeout(`${BASE}/manga/${id}`, 3000);
     if (!res.ok) return null;
     return (await res.json()).data;
   } catch {
@@ -70,7 +70,7 @@ export async function getMangaById(id: number): Promise<JikanManga | null> {
 }
 
 export async function getAnimeList(limit = 25, offset = 0): Promise<JikanAnime[]> {
-  const res = await fetchWithTimeout(`${BASE}/anime?limit=${limit}&offset=${offset}`);
+  const res = await fetchWithTimeout(`${BASE}/anime?limit=${limit}&offset=${offset}`, 3000);
   if (!res.ok) throw new Error("Failed to fetch anime list");
   const json = await res.json();
   return json.data ?? [];
@@ -78,7 +78,7 @@ export async function getAnimeList(limit = 25, offset = 0): Promise<JikanAnime[]
 
 export async function getAnimeById(id: number): Promise<JikanAnime | null> {
   try {
-    const res = await fetchWithTimeout(`${BASE}/anime/${id}`);
+    const res = await fetchWithTimeout(`${BASE}/anime/${id}`, 3000);
     if (!res.ok) return null;
     return (await res.json()).data;
   } catch {
@@ -90,7 +90,7 @@ export async function getSeasonalAnime(year?: number, season?: string): Promise<
   const now = new Date();
   const y = year ?? now.getFullYear();
   const s = season ?? ["winter", "spring", "summer", "fall"][Math.floor(now.getMonth() / 3)];
-  const res = await fetchWithTimeout(`${BASE}/seasons/${y}/${s}?limit=25`);
+  const res = await fetchWithTimeout(`${BASE}/seasons/${y}/${s}?limit=25`, 3000);
   const json = await res.json();
   return json.data ?? [];
 }

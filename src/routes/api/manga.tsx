@@ -9,8 +9,7 @@ export const Route = createFileRoute("/api/manga")({
         const id = url.searchParams.get("id");
         if (id) {
           const manga = await getMangaById(Number(id));
-          if (!manga) return Response.json({ error: "Not found" }, { status: 404 });
-          return Response.json(manga);
+          return Response.json(manga ?? {});
         }
         try {
           const limit = Number(url.searchParams.get("limit") || 25);

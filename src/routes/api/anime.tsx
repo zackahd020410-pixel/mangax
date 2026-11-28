@@ -9,8 +9,7 @@ export const Route = createFileRoute("/api/anime")({
         const id = url.searchParams.get("id");
         if (id) {
           const anime = await getAnimeById(Number(id));
-          if (!anime) return Response.json({ error: "Not found" }, { status: 404 });
-          return Response.json(anime);
+          return Response.json(anime ?? {});
         }
         try {
           const limit = Number(url.searchParams.get("limit") || 25);
