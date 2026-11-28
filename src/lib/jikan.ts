@@ -1,4 +1,4 @@
-const BASE = "https://api.jikan.moe/v4";
+const BASE = (typeof process !== "undefined" && process.env?.JIKAN_PROXY_URL) || "https://api.jikan.moe/v4";
 
 export type JikanManga = {
   mal_id: number;
