@@ -32,10 +32,16 @@ function Index() {
   const [slide, setSlide] = useState(0);
   const [mangaList, setMangaList] = useState<JikanManga[]>([]);
   const [animeList, setAnimeList] = useState<JikanAnime[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/manga?limit=25").then((r) => r.json()).then((d) => setMangaList(d || [])).catch(() => setMangaList([]));
-    fetch("/api/anime?limit=25").then((r) => r.json()).then((d) => setAnimeList(d || [])).catch(() => setAnimeList([]));
+    Promise.all([
+      fetch("/api/manga?limit=25").then((r) => r.json()).catch(() => []),
+      fetch("/api/anime?limit=25").then((r) => r.json()).catch(() => []),
+    ]).then(([m, a]) => {
+      setMangaList(m || []);
+      setAnimeList(a || []);
+    }).finally(() => setLoading(false));
   }, []);
 
   const mangaItems = mangaList.map((m) => ({
@@ -154,8 +160,14 @@ function Index() {
         {/* Manga/Anime grid - paginated */}
         <section>
           <SectionHead title="All" />
-          {filtered.length === 0 ? (
-            <p className="text-muted-foreground">Loading...</p>
+          {loading ? (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="aspect-[3/4] rounded-lg bg-muted animate-pulse" />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <p className="text-muted-foreground">No results found. Please check your connection.</p>
           ) : (
             <>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">

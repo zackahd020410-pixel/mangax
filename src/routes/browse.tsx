@@ -67,9 +67,11 @@ function Browse() {
   const [sort, setSort] = useState<"rating" | "az">("rating");
   const [status, setStatus] = useState<"all" | "ongoing" | "completed">("all");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
+    setError(null);
     fetch(`/api/${type}?limit=25`)
       .then((r) => r.json())
       .then((data) => {
@@ -78,7 +80,10 @@ function Browse() {
           : (data as JikanAnime[]).map(normalizeAnime);
         setItems(list);
       })
-      .catch(() => setItems([]))
+      .catch((err) => {
+        setError(err.message || "Failed to load");
+        setItems([]);
+      })
       .finally(() => setLoading(false));
   }, [type]);
 
@@ -178,6 +183,15 @@ function Browse() {
             {Array.from({ length: 12 }).map((_, i) => (
               <div key={i} className="aspect-[3/4] rounded-lg bg-muted animate-pulse" />
             ))}
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <Search className="h-12 w-12 text-muted-foreground mb-3" />
+            <h2 className="text-lg font-semibold">Failed to load</h2>
+            <p className="text-sm text-muted-foreground">{error}</p>
+            <button onClick={() => window.location.reload()} className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">
+              Retry
+            </button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">

@@ -43,36 +43,54 @@ export type JikanAnime = {
   aired?: { from?: string; to?: string };
 };
 
+function fetchWithTimeout(url: string, ms = 8000): Promise<Response> {
+  return Promise.race([
+    fetch(url),
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Request timeout")), ms),
+    ),
+  ]);
+}
+
 export async function getMangaList(limit = 25, offset = 0): Promise<JikanManga[]> {
-  const res = await fetch(`${BASE}/manga?limit=${limit}&offset=${offset}`);
+  const res = await fetchWithTimeout(`${BASE}/manga?limit=${limit}&offset=${offset}`);
   if (!res.ok) throw new Error("Failed to fetch manga list");
   const json = await res.json();
   return json.data ?? [];
 }
 
 export async function getMangaById(id: number): Promise<JikanManga | null> {
-  const res = await fetch(`${BASE}/manga/${id}`);
-  if (!res.ok) return null;
-  return (await res.json()).data;
+  try {
+    const res = await fetchWithTimeout(`${BASE}/manga/${id}`);
+    if (!res.ok) return null;
+    return (await res.json()).data;
+  } catch {
+    return null;
+  }
 }
 
 export async function getAnimeList(limit = 25, offset = 0): Promise<JikanAnime[]> {
-  const res = await fetch(`${BASE}/anime?limit=${limit}&offset=${offset}`);
+  const res = await fetchWithTimeout(`${BASE}/anime?limit=${limit}&offset=${offset}`);
+  if (!res.ok) throw new Error("Failed to fetch anime list");
   const json = await res.json();
   return json.data ?? [];
 }
 
 export async function getAnimeById(id: number): Promise<JikanAnime | null> {
-  const res = await fetch(`${BASE}/anime/${id}`);
-  if (!res.ok) return null;
-  return (await res.json()).data;
+  try {
+    const res = await fetchWithTimeout(`${BASE}/anime/${id}`);
+    if (!res.ok) return null;
+    return (await res.json()).data;
+  } catch {
+    return null;
+  }
 }
 
 export async function getSeasonalAnime(year?: number, season?: string): Promise<JikanAnime[]> {
   const now = new Date();
   const y = year ?? now.getFullYear();
   const s = season ?? ["winter", "spring", "summer", "fall"][Math.floor(now.getMonth() / 3)];
-  const res = await fetch(`${BASE}/seasons/${y}/${s}?limit=25`);
+  const res = await fetchWithTimeout(`${BASE}/seasons/${y}/${s}?limit=25`);
   const json = await res.json();
   return json.data ?? [];
 }
