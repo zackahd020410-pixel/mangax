@@ -27,15 +27,15 @@ type Item = {
   type: "manga" | "anime";
 };
 
-function normalizeManga(m: JikanManga): Item {
+function normalizeManga(m: any): Item {
   return {
-    id: m.mal_id,
-    slug: String(m.mal_id),
-    title: m.title_english || m.title,
-    cover: m.image_url || "",
+    id: m.mal_id || m.id || m.slug,
+    slug: String(m.mal_id || m.slug),
+    title: m.title_english || m.title || m.title,
+    cover: m.image_url || m.cover || "",
     synopsis: m.synopsis,
-    genres: (m.genres || []).map((g) => g.name),
-    rating: m.score ?? 0,
+    genres: (m.genres || []).map((g: any) => (typeof g === "string" ? g : g.name)),
+    rating: m.score ?? m.rating ?? 0,
     chapters: m.chapters,
     episodes: undefined,
     status: m.status || "Unknown",
