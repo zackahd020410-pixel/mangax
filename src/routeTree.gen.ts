@@ -15,6 +15,8 @@ import { Route as BrowseRouteImport } from './routes/browse'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as AnimeSlugRouteImport } from './routes/anime.$slug'
+import { Route as ApiAnimeRouteImport } from './routes/api/anime'
 import { Route as ApiMangaRouteImport } from './routes/api/manga'
 import { Route as GenreSlugRouteImport } from './routes/genre.$slug'
 import { Route as MangaSlugRouteImport } from './routes/manga.$slug'
@@ -50,6 +52,16 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnimeSlugRoute = AnimeSlugRouteImport.update({
+  id: '/anime/$slug',
+  path: '/anime/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAnimeRoute = ApiAnimeRouteImport.update({
+  id: '/api/anime',
+  path: '/api/anime',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiMangaRoute = ApiMangaRouteImport.update({
   id: '/api/manga',
   path: '/api/manga',
@@ -78,6 +90,8 @@ export interface FileRoutesByFullPath {
   '/history': typeof HistoryRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/anime/$slug': typeof AnimeSlugRoute
+  '/api/anime': typeof ApiAnimeRoute
   '/api/manga': typeof ApiMangaRoute
   '/genre/$slug': typeof GenreSlugRoute
   '/manga/$slug': typeof MangaSlugRoute
@@ -90,6 +104,8 @@ export interface FileRoutesByTo {
   '/history': typeof HistoryRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/anime/$slug': typeof AnimeSlugRoute
+  '/api/anime': typeof ApiAnimeRoute
   '/api/manga': typeof ApiMangaRoute
   '/genre/$slug': typeof GenreSlugRoute
   '/manga/$slug': typeof MangaSlugRoute
@@ -103,6 +119,8 @@ export interface FileRoutesById {
   '/history': typeof HistoryRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/anime/$slug': typeof AnimeSlugRoute
+  '/api/anime': typeof ApiAnimeRoute
   '/api/manga': typeof ApiMangaRoute
   '/genre/$slug': typeof GenreSlugRoute
   '/manga/$slug': typeof MangaSlugRoute
@@ -117,6 +135,8 @@ export interface FileRouteTypes {
     | '/history'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/anime/$slug'
+    | '/api/anime'
     | '/api/manga'
     | '/genre/$slug'
     | '/manga/$slug'
@@ -129,6 +149,8 @@ export interface FileRouteTypes {
     | '/history'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/anime/$slug'
+    | '/api/anime'
     | '/api/manga'
     | '/genre/$slug'
     | '/manga/$slug'
@@ -141,6 +163,8 @@ export interface FileRouteTypes {
     | '/history'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/anime/$slug'
+    | '/api/anime'
     | '/api/manga'
     | '/genre/$slug'
     | '/manga/$slug'
@@ -154,6 +178,8 @@ export interface RootRouteChildren {
   HistoryRoute: typeof HistoryRoute
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  AnimeSlugRoute: typeof AnimeSlugRoute
+  ApiAnimeRoute: typeof ApiAnimeRoute
   ApiMangaRoute: typeof ApiMangaRoute
   GenreSlugRoute: typeof GenreSlugRoute
   MangaSlugRoute: typeof MangaSlugRoute
@@ -204,6 +230,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/anime/$slug': {
+      id: '/anime/$slug'
+      path: '/anime/$slug'
+      fullPath: '/anime/$slug'
+      preLoaderRoute: typeof AnimeSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/anime': {
+      id: '/api/anime'
+      path: '/api/anime'
+      fullPath: '/api/anime'
+      preLoaderRoute: typeof ApiAnimeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/manga': {
       id: '/api/manga'
       path: '/api/manga'
@@ -242,6 +282,8 @@ const rootRouteChildren: RootRouteChildren = {
   HistoryRoute: HistoryRoute,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  AnimeSlugRoute: AnimeSlugRoute,
+  ApiAnimeRoute: ApiAnimeRoute,
   ApiMangaRoute: ApiMangaRoute,
   GenreSlugRoute: GenreSlugRoute,
   MangaSlugRoute: MangaSlugRoute,

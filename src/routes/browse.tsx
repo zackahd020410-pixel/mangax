@@ -1,48 +1,98 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { BookOpen, Search, Filter, SlidersHorizontal } from "lucide-react";
-import { mangas } from "@/lib/manga";
-import { scrapedManga } from "@/lib/scraped-data";
+import { useEffect, useState } from "react";
+import { BookOpen, Search, Filter, SlidersHorizontal, Film } from "lucide-react";
+import type { JikanManga, JikanAnime } from "@/lib/jikan";
 
 export const Route = createFileRoute("/browse")({
   head: () => ({
     meta: [
-      { title: "Browse Manga — MangaX" },
-      { name: "description", content: "Browse all manga on MangaX. Filter by genre, sort by rating or latest update." },
+      { title: "Browse — MangaX" },
+      { name: "description", content: "Browse manga and anime on MangaX. Filter by genre, sort by rating or latest." },
     ],
   }),
   component: Browse,
 });
 
-function Browse() {
-  const [list, setList] = useState<any[]>(scrapedManga.length > 0 ? scrapedManga : mangas.map((m) => ({
-    id: `local-${m.slug}`,
-    source: "local",
-    slug: m.slug,
-    title: m.title,
-    cover: m.cover,
+type Item = {
+  id: number | string;
+  slug: string;
+  title: string;
+  cover: string;
+  synopsis: string | undefined;
+  genres: string[];
+  rating: number;
+  chapters: number | undefined;
+  episodes: number | undefined;
+  status: string;
+  type: "manga" | "anime";
+};
+
+function normalizeManga(m: JikanManga): Item {
+  return {
+    id: m.mal_id,
+    slug: String(m.mal_id),
+    title: m.title_english || m.title,
+    cover: m.image_url || "",
     synopsis: m.synopsis,
-    genres: m.genres,
-    rating: m.rating,
+    genres: (m.genres || []).map((g) => g.name),
+    rating: m.score ?? 0,
     chapters: m.chapters,
-    status: m.status,
-  })));
+    episodes: undefined,
+    status: m.status || "Unknown",
+    type: "manga",
+  };
+}
+
+function normalizeAnime(a: JikanAnime): Item {
+  return {
+    id: a.mal_id,
+    slug: String(a.mal_id),
+    title: a.title_english || a.title,
+    cover: a.image_url || "",
+    synopsis: a.synopsis,
+    genres: (a.genres || []).map((g) => g.name),
+    rating: a.score ?? 0,
+    chapters: undefined,
+    episodes: a.episodes,
+    status: a.status || "Unknown",
+    type: "anime",
+  };
+}
+
+function Browse() {
+  const [type, setType] = useState<"manga" | "anime">("manga");
+  const [items, setItems] = useState<Item[]>([]);
   const [q, setQ] = useState("");
   const [genre, setGenre] = useState<string | null>(null);
   const [sort, setSort] = useState<"rating" | "az">("rating");
   const [status, setStatus] = useState<"all" | "ongoing" | "completed">("all");
+  const [loading, setLoading] = useState(false);
 
-  const filtered = list.filter((m) => {
+  useEffect(() => {
+    setLoading(true);
+    fetch(`/api/${type}?limit=25`)
+      .then((r) => r.json())
+      .then((data) => {
+        const list = type === "manga"
+          ? (data as JikanManga[]).map(normalizeManga)
+          : (data as JikanAnime[]).map(normalizeAnime);
+        setItems(list);
+      })
+      .catch(() => setItems([]))
+      .finally(() => setLoading(false));
+  }, [type]);
+
+  const filtered = items.filter((m) => {
     const matchQ = m.title.toLowerCase().includes(q.toLowerCase());
     const matchGenre = !genre || m.genres.includes(genre);
     const matchStatus =
       status === "all" ||
-      (status === "ongoing" && m.status === "Ongoing") ||
-      (status === "completed" && m.status === "Completed");
+      (status === "ongoing" && /ongoing|releasing|airing/i.test(m.status)) ||
+      (status === "completed" && /completed|finished/i.test(m.status));
     return matchQ && matchGenre && matchStatus;
   });
 
-  const allGenres = [...new Set(list.flatMap((m) => m.genres))].sort();
+  const allGenres = [...new Set(items.flatMap((m) => m.genres))].sort();
 
   return (
     <div className="min-h-screen pb-20 md:pb-0">
@@ -51,21 +101,29 @@ function Browse() {
           <Link to="/" className="flex items-center gap-2 font-display text-xl font-bold">
             <BookOpen className="h-7 w-7" /> MangaX
           </Link>
+          <div className="ml-auto flex items-center gap-3">
+            <button
+              onClick={() => setType(type === "manga" ? "anime" : "manga")}
+              className={`rounded-full px-4 py-2 text-xs font-medium transition-colors ${type === "anime" ? "bg-primary text-primary-foreground" : "glass hover:bg-accent"}`}
+            >
+              {type === "manga" ? <><Film className="h-3 w-3 inline mr-1" />Switch to Anime</> : <><BookOpen className="h-3 w-3 inline mr-1" />Switch to Manga</>}
+            </button>
+          </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-7xl space-y-8 px-4 py-10 md:px-8">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold">Browse Manga</h1>
-            <p className="text-sm text-muted-foreground">{filtered.length} manga found</p>
+            <h1 className="text-3xl font-bold">Browse {type === "manga" ? "Manga" : "Anime"}</h1>
+            <p className="text-sm text-muted-foreground">{filtered.length} found</p>
           </div>
           <div className="glass flex items-center gap-2 rounded-full px-4 py-2 md:w-full md:max-w-xl">
             <Search className="h-4 w-4 text-muted-foreground" />
             <input
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              placeholder="Search manga..."
+              placeholder={`Search ${type}...`}
               className="w-full bg-transparent outline-none placeholder:text-muted-foreground text-sm"
             />
           </div>
@@ -115,29 +173,31 @@ function Browse() {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="aspect-[3/4] rounded-lg bg-muted animate-pulse" />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Search className="h-12 w-12 text-muted-foreground mb-3" />
-            <h2 className="text-lg font-semibold">No manga found</h2>
+            <h2 className="text-lg font-semibold">No results found</h2>
             <p className="text-sm text-muted-foreground">Try adjusting your search or filters.</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
             {filtered.map((m) => (
-              <Link key={m.id} to="/manga/$slug" params={{ slug: m.slug }} className="group">
+              <Link key={m.id} to={m.type === "manga" ? "/manga/$slug" : "/anime/$slug"} params={{ slug: m.slug }} className="group">
                 <div className="overflow-hidden rounded-lg aspect-[3/4] relative">
                   <img src={m.cover} alt={`${m.title} cover`} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                 </div>
                 <h3 className="mt-2 text-sm font-semibold line-clamp-1">{m.title}</h3>
-                {m.rating && (
-                  <div className="mt-1 flex items-center gap-1">
-                    <BookOpen className="h-3 w-3 fill-hot text-hot" />
-                    <span className="text-xs font-semibold">{m.rating}</span>
-                  </div>
-                )}
-                {m.genres.length > 0 && (
-                  <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{m.genres.join(" · ")}</p>
-                )}
+                <div className="mt-1 flex items-center gap-2">
+                  <span className="text-xs font-semibold">⭐ {m.rating}</span>
+                  <span className="text-xs text-muted-foreground">{m.type === "manga" ? `${m.chapters} ch` : `${m.episodes} ep`}</span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{m.genres.slice(0, 2).join(" · ")}</p>
                 <p className="text-xs text-muted-foreground">{m.status}</p>
               </Link>
             ))}
