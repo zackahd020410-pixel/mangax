@@ -2,17 +2,13 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 import { BookOpen, Bookmark, Share2, Star, ChevronRight, ChevronDown, Clock, ArrowLeft } from "lucide-react";
 import { getMangaById } from "@/lib/jikan";
-import { scrapedManga } from "@/lib/scraped-data";
 import hero from "@/assets/hero.jpg";
 
 export const Route = createFileRoute("/manga/$slug")({
   loader: async ({ params }) => {
     const manga = await getMangaById(Number(params.slug));
-    if (manga) return { manga };
-    // Fallback to scraped data
-    const found = scrapedManga.find((m: any) => m.slug === params.slug || String(m.id) === params.slug);
-    if (found) return { manga: found };
-    throw notFound();
+    if (!manga) throw notFound();
+    return { manga };
   },
   head: ({ loaderData }) => {
     const t = loaderData ? `${loaderData.manga.title} — Read on MangaX` : "Manga not found — MangaX";

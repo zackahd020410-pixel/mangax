@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getMangaList, getMangaById } from "@/lib/jikan";
-import { scrapedManga } from "@/lib/scraped-data";
 
 export const Route = createFileRoute("/api/manga")({
   server: {
@@ -10,22 +9,19 @@ export const Route = createFileRoute("/api/manga")({
         const id = url.searchParams.get("id");
         if (id) {
           const manga = await getMangaById(Number(id));
-          if (manga) return Response.json(manga);
-          // Fallback to scraped data
-          const found = scrapedManga.find((m: any) => m.slug === id || m.id === id);
-          return Response.json(found ?? {});
+          if (!manga) return Response.json({ error: "Not found" }, { status: 404 });
+          return Response.json(manga);
         }
         try {
           const limit = Number(url.searchParams.get("limit") || 25);
           const offset = Number(url.searchParams.get("offset") || 0);
           const list = await getMangaList(limit, offset);
-          if (list && list.length > 0) {
-            return Response.json(list);
+          if (!list || list.length === 0) {
+            return Response.json({ error: "No data from Jikan" }, { status: 503 });
           }
-          throw new Error("Empty Jikan response");
-        } catch {
-          // Fallback to scraped data when Jikan is down
-          return Response.json(scrapedManga);
+          return Response.json(list);
+        } catch (err: any) {
+          return Response.json({ error: err.message || "Jikan API failed" }, { status: 503 });
         }
       },
     },
