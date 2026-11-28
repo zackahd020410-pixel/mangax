@@ -1,13 +1,20 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Bookmark, BookOpen, Trash2, Compass } from "lucide-react";
+import { Bookmark, BookOpen, Trash2 } from "lucide-react";
 import { bookmarks } from "@/lib/storage";
-import { scrapedManga } from "@/lib/scraped-data";
-import { getManga } from "@/lib/manga";
+import { getMangaById } from "@/lib/jikan";
 
-function findManga(slug: string) {
-  return scrapedManga.find((m: any) => m.slug === slug) || getManga(slug);
-}
+type Manga = {
+  mal_id: number;
+  title: string;
+  title_english?: string;
+  image_url?: string;
+  synopsis?: string;
+  status?: string;
+  chapters?: number;
+  score?: number;
+  genres?: { mal_id: number; name: string; url: string }[];
+};
 
 export const Route = createFileRoute("/bookmark")({
   head: () => ({
@@ -21,14 +28,20 @@ export const Route = createFileRoute("/bookmark")({
 
 function BookmarkPage() {
   const [list, setList] = useState<{ slug: string }[]>([]);
+  const [mangas, setMangas] = useState<Manga[]>([]);
 
   useEffect(() => {
-    setList(bookmarks.get());
+    const b = bookmarks.get();
+    setList(b);
+    Promise.all(b.map((x) => getMangaById(Number(x.slug)))).then((m) => {
+      setMangas(m.filter(Boolean) as Manga[]);
+    });
   }, []);
 
   const toggle = (slug: string) => {
     bookmarks.toggle(slug);
     setList(list.filter((b) => b.slug !== slug));
+    setMangas(mangas.filter((m) => String(m.mal_id) !== slug));
   };
 
   return (
@@ -45,7 +58,7 @@ function BookmarkPage() {
         <h1 className="text-3xl font-bold">Bookmarks</h1>
         <p className="text-sm text-muted-foreground">Manga you saved to read later</p>
 
-        {list.length === 0 ? (
+        {mangas.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <Bookmark className="h-12 w-12 text-muted-foreground mb-3" />
             <h2 className="text-lg font-semibold">No bookmarks yet</h2>
@@ -56,17 +69,15 @@ function BookmarkPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-            {list.map((b) => {
-              const m = findManga(b.slug);
-              if (!m) return null;
-              const saved = bookmarks.get().some((x) => x.slug === m.slug);
+            {mangas.map((m) => {
+              const title = m.title_english || m.title;
               return (
-                <Link key={m.slug} to="/manga/$slug" params={{ slug: m.slug }} className="group flex flex-col gap-2">
+                <Link key={m.mal_id} to="/manga/$slug" params={{ slug: String(m.mal_id) }} className="group flex flex-col gap-2">
                   <div className="overflow-hidden rounded-lg aspect-[3/4] relative">
-                    <img src={m.cover} alt={`${m.title} cover`} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <img src={m.image_url || ""} alt={`${title} cover`} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
                     <button
                       aria-label="Remove bookmark"
-                      onClick={(e) => { e.stopPropagation(); toggle(m.slug); }}
+                      onClick={(e) => { e.stopPropagation(); toggle(String(m.mal_id)); }}
                       className="absolute top-2 right-2 grid h-8 w-8 place-items-center bg-black/60 backdrop-blur rounded-full text-white hover:bg-black/80"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -75,15 +86,13 @@ function BookmarkPage() {
                       <Bookmark className="h-4 w-4 fill-foreground" />
                     </div>
                   </div>
-                  <h3 className="mt-2 text-sm font-semibold line-clamp-1">{m.title}</h3>
+                  <h3 className="mt-2 text-sm font-semibold line-clamp-1">{title}</h3>
                   <div className="mt-1 flex items-center gap-1">
                     <BookOpen className="h-3 w-3 fill-hot text-hot" />
-                    <span className="text-xs font-semibold">{m.rating}</span>
+                    <span className="text-xs font-semibold">{m.score ?? "-"}</span>
                   </div>
-                  <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{m.genres.join(" · ")}</p>
-                  {!saved && (
-                    <p className="text-xs text-success-foreground font-medium mt-1">Removed</p>
-                  )}
+                  <p className="mt-1 text-xs text-muted-foreground line-clamp-1">{(m.genres || []).map((g) => g.name).join(" · ")}</p>
+                  <p className="text-xs text-muted-foreground">{m.status}</p>
                 </Link>
               );
             })}
