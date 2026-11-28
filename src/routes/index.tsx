@@ -35,13 +35,22 @@ function Index() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
     Promise.all([
-      fetch("/api/manga?limit=25").then((r) => r.json()).catch(() => []),
-      fetch("/api/anime?limit=25").then((r) => r.json()).catch(() => []),
+      fetch("/api/manga?limit=25", { signal: controller.signal }).then((r) => r.json()).catch(() => []),
+      fetch("/api/anime?limit=25", { signal: controller.signal }).then((r) => r.json()).catch(() => []),
     ]).then(([m, a]) => {
       setMangaList(m || []);
       setAnimeList(a || []);
-    }).finally(() => setLoading(false));
+    }).finally(() => {
+      clearTimeout(timeout);
+      setLoading(false);
+    });
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
   }, []);
 
   const mangaItems = mangaList.map((m) => ({

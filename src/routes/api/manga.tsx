@@ -16,7 +16,10 @@ export const Route = createFileRoute("/api/manga")({
           const limit = Number(url.searchParams.get("limit") || 25);
           const offset = Number(url.searchParams.get("offset") || 0);
           const list = await getMangaList(limit, offset);
-          return Response.json(list);
+          if (list && list.length > 0) {
+            return Response.json(list);
+          }
+          throw new Error("Empty Jikan response");
         } catch {
           // Fallback to scraped data when Jikan is down
           const mapped = scrapedManga.map((m: any) => ({

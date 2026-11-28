@@ -72,7 +72,9 @@ function Browse() {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    fetch(`/api/${type}?limit=25`)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    fetch(`/api/${type}?limit=25`, { signal: controller.signal })
       .then((r) => r.json())
       .then((data) => {
         const list = type === "manga"
@@ -84,7 +86,14 @@ function Browse() {
         setError(err.message || "Failed to load");
         setItems([]);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        clearTimeout(timeout);
+        setLoading(false);
+      });
+    return () => {
+      clearTimeout(timeout);
+      controller.abort();
+    };
   }, [type]);
 
   const filtered = items.filter((m) => {
